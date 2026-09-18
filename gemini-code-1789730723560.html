@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>미스터리 초대장 탈출 - 리얼리티 테마</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 낡은 양피지에 어울리는 리얼한 잉크 색상 */
+    --ink-dark: #2e1c15;    
+    --ink-main: #4e342e;    
+    --ink-red: #8b0000;     
+    --ink-green: #1b5e20;   
+    
+    --font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+    --font-body: 'Nunito', system-ui, sans-serif;
+    --font-scroll: 'Nanum Pen Script', cursive; 
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; height: 100%; overflow-x:hidden;}
+  body{
+    font-family:var(--font-body);
+    color:var(--ink-main);
+    background-color: #05020a; 
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+  }
+
+  /* 🖼️ 배경 이미지 */
+  #bgLayer {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-size: contain; 
+    background-position: center; 
+    background-repeat: no-repeat;
+    background-color: #05020a;
+    z-index: -2; transition: background-image 0.6s ease-in-out;
+  }
+
+  .app{ 
+    width:100%; position: relative; z-index: 1; 
+    padding: 70px 20px 60px; min-height: 100vh;
+  }
+
+  .narrow-card { max-width: 750px; margin: 0 auto; }
+
+  header{ text-align:center; margin-bottom:22px; max-width: 750px; margin: 0 auto 22px; }
+  
+  /* 💡 호박초 촛불 일렁임 애니메이션 */
+  .twinkle-pumpkin {
+    font-size: 36px;
+    display: inline-block;
+    margin-bottom: 5px;
+    animation: flicker 1.5s infinite alternate;
+    filter: drop-shadow(0 0 12px rgba(255, 120, 0, 0.9));
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 15px rgba(255, 120, 0, 1)); }
+    50% { opacity: 0.8; transform: scale(0.95); filter: drop-shadow(0 0 5px rgba(255, 120, 0, 0.5)); }
+    25%, 75% { opacity: 0.9; }
+  }
+
+  /* 💡 빛나는 네온 제목 스타일로 복구 */
+  header h1{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(32px,7vw,42px);
+    margin:0 0 8px; color: #ffffff;
+    text-shadow: 
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px #a200ff,
+      0 0 30px #a200ff,
+      0 0 40px #a200ff;
+  }
+  header p.sub{ 
+    color: #eeeeee; margin:0; font-size:18px; font-weight:bold; 
+    font-family: var(--font-display); 
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.8); 
+  }
+
+  .progress-wrap{position:relative; max-width: 750px; margin: 0 auto 24px;}
+  .progress{ display:flex; justify-content:center; gap:14px; margin:20px 0 4px; }
+  .dot{
+    width:42px;height:42px;border-radius:50%; display:flex;align-items:center;justify-content:center;
+    font-size:18px; background: rgba(255,255,255,0.6); border:2px dashed var(--ink-main);
+    color:var(--ink-main); position:relative; z-index: 2; transition:all .3s ease; cursor:pointer;
+  }
+  .dot.active{
+    border-style: solid; border-color:var(--ink-red); color:var(--ink-red);
+    background: rgba(255,230,230,0.8); transform:scale(1.15);
+  }
+  .dot.done{ border-style: solid; border-color:var(--ink-green); color:var(--ink-green); background: rgba(230,255,230,0.8); }
+  .progress-line{ position:absolute; top:21px; left:10%; right:10%; height:2px; background: var(--ink-main); z-index:1; opacity: 0.3;}
+
+  .screen{display:none;}
+  .screen.active{display:block; animation:fadeUp .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(15px);} to{opacity:1; transform:translateY(0);} }
+
+  .card, .hint-panel, .board-panel {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    backdrop-filter: blur(2px) !important;
+    padding: 20px 25px;
+    margin-bottom: 20px;
+  }
+  
+  .card h2{ font-family:var(--font-scroll); font-size:36px; font-weight: normal; margin:0 0 12px; display:flex;align-items:center;gap:8px; color: var(--ink-dark); justify-content: center; border-bottom: 2px solid var(--ink-main); padding-bottom: 8px;}
+  .card .desc{ color:var(--ink-dark); font-family:var(--font-scroll); font-size:26px; line-height:1.4; margin:0 0 22px; text-align: center;}
+
+  .btn{
+    font-family:var(--font-display); font-weight:800; font-size:16
