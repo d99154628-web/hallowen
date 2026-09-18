@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>미스터리 초대장 탈출 - 리얼리티 테마</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 필기체(Nanum Pen Script) 및 본문 폰트 -->
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 낡은 두루마리에 어울리는 리얼한 잉크 색상 */
+    --ink-dark: #2e1c15;    
+    --ink-main: #4e342e;    
+    --ink-red: #8b0000;     
+    --ink-green: #1b5e20;   
+    
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+    --font-body: 'Nunito', system-ui, sans-serif;
+    --font-scroll: 'Nanum Pen Script', cursive; 
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; height: 100%; overflow-x:hidden;}
+  body{
+    font-family:var(--font-body);
+    color:var(--ink-main);
+    background-color: #05020a; 
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+  }
+
+  /* 🖼️ 배경 이미지 (원본 비율 유지) */
+  #bgLayer {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-size: contain; 
+    background-position: center; 
+    background-repeat: no-repeat;
+    background-color: #05020a;
+    z-index: -2; transition: background-image 0.6s ease-in-out;
+  }
+
+  .app{ 
+    width:100%; max-width:850px; position: relative; z-index: 1; 
+    padding:28px 14px 60px; min-height: 100vh;
+  }
+
+  /* 💡 두루마리 너비에 맞춘 중앙 정렬용 좁은 컨테이너 (380px로 축소) */
+  .narrow-card { max-width: 380px; margin: 0 auto; }
+
+  header{ text-align:center; margin-bottom:22px; max-width: 380px; margin: 0 auto 22px; }
+  header .badge{
+    display:inline-block; font-size:13px; font-weight: 800;
+    color: #fff; background: var(--ink-red);
+    padding:4px 16px; border-radius:999px; margin-bottom:12px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+  }
+  header h1{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(24px,6vw,30px);
+    margin:0 0 6px; color: var(--ink-dark);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+  }
+  header p.sub{ color: var(--ink-main); margin:0; font-size:14px; font-weight:bold; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
+
+  /* progress dots - 두루마리 너비를 벗어나지 않도록 최대 너비 제한 */
+  .progress-wrap{position:relative; max-width: 380px; margin: 0 auto 24px;}
+  .progress{ display:flex; justify-content:center; gap:14px; margin:20px 0 4px; }
+  .dot{
+    width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center;
+    font-size:16px; background: transparent; border:2px dashed var(--ink-main);
+    color:var(--ink-main); position:relative; z-index: 2; transition:all .3s ease; cursor:pointer;
+  }
+  .dot.active{
+    border-style: solid; border-color:var(--ink-red); color:var(--ink-red);
+    background: rgba(139, 0, 0, 0.1); transform:scale(1.15);
+  }
+  .dot.done{ border-style: solid; border-color:var(--ink-green); color:var(--ink-green); }
+  .progress-line{ position:absolute; top:19px; left:10%; right:10%; height:2px; background: var(--ink-main); z-index:1; opacity: 0.3;}
+
+  /* panels */
+  .screen{display:none;}
+  .screen.active{display:block; animation:fadeUp .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(15px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ✨ 배경 100% 투명 카드 */
+  .card, .hint-panel, .board-panel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding: 10px 5px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.6); 
+  }
+  
+  .card h2{ font-family:var(--font-display); font-size:22px; margin:0 0 12px; display:flex;align-items:center;gap:8px; color: var(--ink-dark); justify-content: center; border-bottom: 2px solid var(--ink-main); padding-bottom: 8px;}
+  .card .desc{ color:var(--ink-main); font-size:14px; line-height:1.5; margin:0 0 22px; font-weight: 600; text-align: center;}
+
+  /* 💡 버튼 너비 축소 및 가운데 정렬 */
+  .btn{
+    font-family:var(--font-display); font-weight:800; font-size:15px; color:#fff; 
+    background: var(--ink-dark);
+    border: 2px solid #1a0f0b; padding:12px 20px; border-radius:8px; cursor:pointer; 
+    box-shadow: 2px 4px 0 rgba(0,0,0,0.6);
+    transition:transform .1s ease, box-shadow .1s ease; 
+    width: 90%; margin: 0 auto; display: block;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 0 0 rgba(0,0,0,0.6);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn.pink{ background: var(--ink-red); border-color: #4a0000; }
+
+  /* 💡 스테이지 1 세로 배치로 변경 및 폭 제한 */
+  .stage1-layout { display: flex; flex-direction: column; gap: 15px; align-items: center; max-width: 380px; margin: 0 auto; }
+  .hint-panel { flex: 1; border-bottom: 2px dashed rgba(78, 52, 46, 0.3) !important; padding-bottom: 15px; width: 100%;}
+  .board-panel { flex: 1; width: 100%; }
+
+  /* 📜 투명한 힌트 마법서 */
+  .hint-panel h3 { 
+    margin-top: 0; margin-bottom: 15px; 
+    color: var(--ink-dark); font-size: 24px; text-align: center;
+    font-family: var(--font-scroll); font-weight: bold;
+    border-bottom: 2px dashed var(--ink-main); padding-bottom: 8px;
+  }
+  .hint-list { list-style: none; padding: 0; margin: 0; }
+  .hint-list li { 
+    margin-bottom: 12px; line-height: 1.2;
+    font-family: var(--font-scroll); font-size: 20px; color: var(--ink-dark);
+  }
+  .hint-list li span { display: block; color: var(--ink-red); font-size: 22px; margin-top: 2px; }
+
+  /* 스테이지 1 : 단어 */
+  .word-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:20px; }
+  .word-item{ border:1px dashed var(--ink-main); border-radius:var(--radius-md); padding:10px; text-align:center; background: rgba(255,255,255,0.2); }
+  .word-item .emoji{font-size:28px; display:block; margin-bottom:6px; }
+  .word-item .sentence{ font-size:14px; line-height:1.4; color:var(--ink-main); font-weight: bold; }
+  .word-item input{
+    width:70px; text-align:center; font-family:var(--font-scroll); font-weight:700; font-size:20px; padding:2px; border-radius:0;
+    border: none; border-bottom: 2px solid var(--ink-main); background: transparent; color:var(--ink-red);
+  }
+  .word-item input:focus{outline:none; border-bottom-color: var(--ink-red);}
+  .word-item.correct{border-style: solid; border-color:var(--ink-green); background: rgba(27, 94, 32, 0.1);}
+  .word-item.correct input{border-color:var(--ink-green); color:var(--ink-green); }
+  
+  .status-line{ font-size:14px; color:var(--ink-main); margin:12px 0 6px; min-height:20px; font-weight: 800; text-align: center; }
+  .status-line.ok{color:var(--ink-green); }
+  .status-line.err{color:var(--ink-red);}
+
+  /* 스테이지 2 : 말판 */
+  .board-wrap{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:16px; }
+  .tile{
+    aspect-ratio:1/1; border-radius:10px; border:2px solid rgba(78, 52, 46, 0.4); background: rgba(255,255,255,0.2);
+    display:flex;flex-direction:column;align-items:center;justify-content:center; font-size:11px; text-align:center; padding:2px; line-height:1.2; position:relative; color:var(--ink-dark); font-weight: bold;
+  }
+  .tile .n{font-size:13px; font-weight:800; color:var(--ink-dark); margin-bottom: 2px;}
+  .tile.start{border-color:var(--ink-red); color:var(--ink-red); background: rgba(139, 0, 0, 0.05);}
+  .tile.solved{border-color:var(--ink-green); color:var(--ink-green); background: rgba(27, 94, 32, 0.1);}
+  .tile.solved .n { color: var(--ink-green); }
+  .tile.token::after{ content:"👻"; position:absolute; top:-12px; right:-6px; font-size:20px; animation: float 2s infinite ease-in-out; }
+  @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+
+  .dice-row{ display:flex;align-items:center;justify-content:center; gap:12px; margin:12px 0 20px; }
+  .dice{
+    width:50px;height:50px; flex-shrink: 0; border-radius:12px; background:var(--ink-dark); color:#fff; border: 2px solid #1a0f0b;
+    display:flex;align-items:center;justify-content:center; font-family:var(--font-display); font-weight:800; font-size:24px;
+    box-shadow: 2px 4px 0 rgba(0,0,0,0.5); transition:transform .3s ease;
+  }
+  .dice.rolling{animation:spin .4s ease infinite;}
+  @keyframes spin{ 0%{transform:rotate(0deg) scale(1.1);} 100%{transform:rotate(360deg) scale(1.1);} }
+  .dice-row .btn { width: auto; flex: 1; margin: 0; } /* 주사위 옆 버튼은 꽉 차지 않도록 예외 처리 */
+
+  .challenge-box{ background: rgba(255,255,255,0.3); border:1px dashed var(--ink-main); border-radius:var(--radius-md); padding:12px; margin-top:10px; text-align: center;}
+  .challenge-box .q-text { color: var(--ink-red); font-size: 16px; font-weight: bold; margin-bottom: 6px; font-family: var(--font-scroll);}
+  .challenge-box .frame{ font-family:var(--font-body); font-weight:700; font-size:14px; margin-bottom:10px; color:var(--ink-dark); }
+  .challenge-box input[type=text]{
+    width:90%; padding:6px; border:none; border-bottom:2px solid var(--ink-main); background: transparent; color:var(--ink-red);
+    font-size:20px; font-family:var(--font-scroll); font-weight: bold; margin-bottom:10px; text-align: center;
+  }
+  .challenge-box input[type=text]:focus{outline:none; border-bottom-color: var(--ink-red);}
+  
+  .code-track{ display:flex; gap:8px; justify-content:center; margin:16px 0 10px; }
+  .code-slot{
+    width:42px;height:50px; border-radius:8px; border:2px dashed rgba(78, 52, 46, 0.4);
+    display:flex;align-items:center;justify-content:center; font-family:var(--font-scroll); font-size:30px; font-weight:800; color: rgba(78, 52, 46, 0.3);
+  }
+  .code-slot.filled{ border-style:solid; border-color:var(--ink-green); color:var(--ink-green); background:rgba(27, 94, 32, 0.1); }
+
+  /* 스테이지 3 : 초대장 및 쪽지 */
+  .secret-note {
+    background: rgba(255,255,255,0.4); padding: 15px; border-radius: 4px; border: 1px dashed var(--ink-red);
+    margin-bottom: 20px; font-family: var(--font-scroll); color: var(--ink-dark); text-align: center;
+  }
+  .secret-note strong { color: var(--ink-red); font-size: 18px; display: block; margin-bottom: 8px; font-family: var(--font-body); }
+  .secret-note span { color: var(--ink-dark); font-size: 22px; }
+
+  .invite-field{margin-bottom:14px;}
+  .invite-field label{ display:block; font-size:14px; color:var(--ink-main); margin-bottom:6px; font-weight:700; text-align: center;}
+  .invite-field .row{display:flex; gap:6px; flex-wrap:wrap; justify-content: center;}
+  .invite-field input[type=text]{
+    flex:1; min-width:100px; padding:4px; border:none; border-bottom: 2px solid var(--ink-main); background: transparent; color:var(--ink-red);
+    font-size:20px; font-family:var(--font-scroll); font-weight: bold; text-align: center;
+  }
+  .invite-field input.short{max-width:60px; flex:none; }
+  .invite-field input:focus{outline:none; border-bottom-color: var(--ink-red);}
+  
+  .envelope{
+    margin-top:20px; background:rgba(255,255,255,0.3); border:2px dashed var(--ink-dark); border-radius:4px; padding:15px;
+    font-family:var(--font-scroll); font-size:24px; line-height:1.4; color:var(--ink-dark); display:none; text-align: center;
+  }
+  .envelope.show{display:block;}
+
+  /* 스테이지 4 : 문 */
+  .keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:220px; margin:0 auto 10px; }
+  .keypad button{
+    padding:12px 0; border-radius:8px; background: rgba(255,255,255,0.4); border: 2px solid var(--ink-dark); color: var(--ink-dark);
+    font-family:var(--font-display); font-size:22px; font-weight:800; cursor:pointer; transition: all 0.1s;
+  }
+  .keypad button:active{ background: var(--ink-dark); color: #fff; }
+  .keypad button.wide{ grid-column:span 3; font-size:15px; padding: 8px 0; background: transparent; border-style: dashed;}
+  .display-code{ text-align:center; font-family:var(--font-scroll); font-size:40px; letter-spacing:12px; color:var(--ink-red); margin:10px 0 20px; min-height:45px; font-weight: bold; }
+
+  /* 성공 */
+  .success-wrap{text-align:center;}
+  .success-wrap .big-emoji{font-size:60px; margin-bottom:10px; animation: bounce 2s infinite;}
+  .success-wrap h2{font-size:28px; color: var(--ink-dark); border: none;}
+  .final-card{ background:rgba(255,255,255,0.4); border:2px solid var(--ink-green); border-radius:8px; padding:18px; margin:20px 0; text-align:center; font-family:var(--font-scroll); font-size:26px; line-height:1.4; color:var(--ink-green); }
+</style>
+</head>
+<body>
+
+<div id="bgLayer" style="background-image: url('bg_intro.jpeg');"></div>
+
+<div class="app">
+  <header>
+    <span class="badge">👻 HALLOWEEN ESCAPE</span>
+    <h1>미스터리 초대장 탈출</h1>
+    <p class="sub">짝과 함께 힌트를 찾고, 저택의 문을 열어보세요!</p>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress-line"></div>
+    <div class="progress" id="progressDots">
+      <div class="dot active" data-stage="0">abc</div>
+      <div class="dot" data-stage="1">🔮</div>
+      <div class="dot" data-stage="2">📨</div>
+      <div class="dot" data-stage="3">🚪</div>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <section class="screen active" id="screen-intro">
+    <div class="card narrow-card">
+      <h2>🗝️ 유령 저택의 초대장</h2>
+      <p class="desc">
+        할로윈 파티 초대장이 저택 곳곳에 흩어져 버렸어요! 3개의 방을 통과하며 낡은 두루마리에서 단서를 찾고,
+        마지막 문의 자물쇠를 풀어야 진짜 초대장을 완성할 수 있어요.<br><br>용기 내어 들어갈 준비가 되었나요?
+      </p>
+      <button class="btn" onclick="goStage(0)">미스터리 저택 입장하기 →</button>
+    </div>
+  </section>
+
+  <!-- STAGE 1 : VOCAB LOCK -->
+  <section class="screen" id="screen-0">
+    <div class="card narrow-card">
+      <h2>abc 첫 번째 자물쇠 · 낱말방</h2>
+      <p class="desc">그림에 어울리는 낱말을 빈칸에 써서 잉크로 완성하세요. 6개를 모두 맞히면 다음 방으로 이동해요.</p>
+      <div class="word-grid" id="wordGrid"></div>
+      <div class="status-line" id="stage0-status"></div>
+      <button class="btn" id="stage0-next" disabled onclick="goStage(1)">두 번째 방으로 →</button>
+    </div>
+  </section>
+
+  <!-- STAGE 2 : BOARD MAZE -->
+  <section class="screen" id="screen-1">
+    <div class="stage1-layout">
+      <!-- 📜 힌트 두루마리 -->
+      <div class="card hint-panel">
+        <h3>📜 마법의 힌트</h3>
+        <ul class="hint-list">
+          <li>🎬 영화 축제에 올 수 있니?<br><span>Can you come to the movie festival?</span></li>
+          <li>🎂 내 생일 파티에 올 수 있니?<br><span>Can you come to my birthday party?</span></li>
+          <li>📖 책 축제에 올 수 있니?<br><span>Can you come to the book festival?</span></li>
+          <li>⚡ 레이저 쇼에 올 수 있니?<br><span>Can you come to the laser show?</span></li>
+          <li>🍳 요리 교실 파티에 올 수 있니?<br><span>Can you come to the cooking class party?</span></li>
+          <li>🥋 태권도 쇼에 올 수 있니?<br><span>Can you come to the taekwondo show?</span></li>
+          <li>🏠 우리 집으로 1시에 와.<br><span>Come to my house at 1.</span></li>
+          <li>🏫 학교 식당으로 2시에 와.<br><span>Come to the school kitchen at 2.</span></li>
+          <li>📚 학교 도서관으로 3시에 와.<br><span>Come to the school library at 3.</span></li>
+          <li>🏫 학교로 4시에 와.<br><span>Come to the school at 4.</span></li>
+          <li>⚽ 스포츠 공원으로 5시에 와.<br><span>Come to the sports park at 5.</span></li>
+          <li>🌳 공원으로 6시에 와.<br><span>Come to the park at 6.</span></li>
+        </ul>
+      </div>
+
+      <!-- 말판 패널 -->
+      <div class="card board-panel">
+        <h2>🔮 두 번째 자물쇠 · 마법진 미로</h2>
+        <p class="desc" style="text-align:left;">주사위를 굴려 말판을 이동하세요. 도착한 칸의 <strong>문제(Q)</strong>를 위 힌트에서 찾아 영어로 완성하세요!</p>
+        <div class="board-wrap" id="boardWrap"></div>
+        <div class="dice-row">
+          <div class="dice" id="dice">🔮</div>
+          <button class="btn pink" id="rollBtn" onclick="rollDice()">주사위 굴리기</button>
+        </div>
+        <div id="challengeArea"></div>
+        <div class="code-track">
+          <div class="code-slot" id="track-0"></div><div class="code-slot" id="track-1"></div><div class="code-slot" id="track-2"></div><div class="code-slot" id="track-3"></div>
+        </div>
+        <button class="btn" id="stage1-next" style="display:none;" onclick="goStage(2)">세 번째 방으로 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAGE 3 : INVITATION -->
+  <section class="screen" id="screen-2">
+    <div class="card narrow-card">
+      <h2>📨 세 번째 자물쇠 · 초대장 완성</h2>
+      <p class="desc">바닥에서 발견한 낡은 쪽지 조각을 읽고, 진짜 초대장 문장을 완성하세요.</p>
+      
+      <div class="secret-note">
+        <strong>📜 누군가 붉은 잉크로 남긴 쪽지</strong>
+        <span>"Can you come to the <u>book festival</u>?<br>
+        Come to <u>the school library</u> at <u>3</u>."</span>
+      </div>
+
+      <div class="invite-field">
+        <label>Can you come to ______ ? <span style="font-weight:400;color:var(--ink-main)">(행사 이름)</span></label>
+        <div class="row"><input type="text" id="eventInput" placeholder="행사 이름을 영어로 적어보세요"></div>
+      </div>
+      <div class="invite-field">
+        <label>Come to ______ at ___ . <span style="font-weight:400;color:var(--ink-main)">(장소와 시간)</span></label>
+        <div class="row">
+          <input type="text" id="placeInput" placeholder="장소 이름">
+          <input type="text" class="short" id="timeInput" placeholder="시간">
+        </div>
+      </div>
+      <div class="status-line" id="stage2-status"></div>
+      <button class="btn pink" style="margin-top:10px;" onclick="checkInvitation()">붉은 왁스로 봉인하기 📨</button>
+      <div class="envelope" id="envelopePreview"></div>
+      <button class="btn" id="stage2-next" style="display:none; margin-top:20px;" onclick="goStage(3)">마지막 문으로 →</button>
+    </div>
+  </section>
+
+  <!-- STAGE 4 : DOOR -->
+  <section class="screen" id="screen-3">
+    <div class="card narrow-card" style="text-align:center;">
+      <h2 style="justify-content:center;">🚪 마지막 관문 · 낡은 나무 문</h2>
+      <p class="desc" style="text-align:center; margin-bottom: 30px;">미로에서 쪽지에 모아둔 숫자를 순서대로 입력해 문을 여세요.</p>
+      
+      <div class="display-code" id="codeDisplay">— — — —</div>
+      <div class="keypad" id="keypad"></div>
+      <div class="status-line" id="stage3-status" style="text-align:center; margin-top: 10px;"></div>
+    </div>
+  </section>
+
+  <!-- SUCCESS -->
+  <section class="screen" id="screen-success">
+    <div class="card narrow-card success-wrap">
+      <div class="big-emoji">🦇✨</div>
+      <h2>탈출 성공!</h2>
+      <p class="desc" style="text-align:center;">무사히 모든 자물쇠를 풀고 진짜 초대장을 완성했어요. 짝과 함께 큰 소리로 읽어보세요!</p>
+      <div class="final-card" id="finalCard"></div>
+      <button class="btn" onclick="location.reload()" style="background: transparent; border: 2px dashed var(--ink-main); color: var(--ink-dark); box-shadow: none;">처음으로 돌아가기 ↺</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* 사운드 효과 */
+const clickSound = new Audio('click.mp3');
+const doorSound = new Audio('door.mp3');
+
+document.addEventListener('click', (e) => {
+  if(e.target.closest('button') || e.target.closest('.dot')) {
+    clickSound.currentTime = 0; clickSound.play().catch(() => {});
+  }
+});
+
+/* 배경 이미지 매핑 */
+const bgImages = {
+  '-1': 'url("bg_intro.jpeg")',
+  '0': 'url("bg_vocab.jpeg")',
+  '1': 'url("bg_maze.jpeg")',
+  '2': 'url("bg_letter.jpeg")',
+  '3': 'url("bg_door.jpeg")'
+};
+
+/* 데이터 */
+const EVENTS = [
+  {key:'birthday', label:'birthday party', full:'my birthday party', kor:'내 생일 파티'},
+  {key:'laser', label:'laser show', full:'the laser show', kor:'레이저 쇼'},
+  {key:'book', label:'book festival', full:'the book festival', kor:'책 축제'},
+  {key:'movie', label:'movie festival', full:'the movie festival', kor:'영화 축제'},
+  {key:'cooking', label:'cooking class party', full:'the cooking class party', kor:'요리 교실 파티'},
+  {key:'taekwondo', label:'taekwondo show', full:'the taekwondo show', kor:'태권도 쇼'}
+];
+const PLACES = [
+  {key:'house', name:'my house', kor:'우리 집', num:1},
+  {key:'kitchen', name:'the school kitchen', kor:'학교 식당', num:2},
+  {key:'library', name:'the school library', kor:'학교 도서관', num:3},
+  {key:'school', name:'the school', kor:'학교', num:4},
+  {key:'park5', name:'the sports park', kor:'스포츠 공원', num:5},
+  {key:'park6', name:'the park', kor:'공원', num:6}
+];
+
+function norm(s){ return (s||'').toLowerCase().trim().replace(/[.?!]+$/,'').replace(/\s+/g,' '); }
+
+/* NAV */
+let currentStage = -1;
+function goStage(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if(n===-1){ document.getElementById('screen-intro').classList.add('active'); } 
+  else if(n>=0 && n<=3){ document.getElementById('screen-'+n).classList.add('active'); }
+  currentStage = n;
+  
+  document.querySelectorAll('.dot').forEach(d=>{
+    const ds = parseInt(d.dataset.stage);
+    d.classList.remove('active','done');
+    if(ds < n) d.classList.add('done');
+    else if(ds === n) d.classList.add('active');
+  });
+  
+  document.getElementById('bgLayer').style.backgroundImage = bgImages[n] || bgImages['-1'];
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(n===0) initStage0();
+  if(n===1) initStage1();
+  if(n===3) initStage3();
+}
+
+/* STAGE 0 */
+const STAGE0_ITEMS = [
+  {emoji:'🎂', before:'', after:' party', answer:'birthday'}, {emoji:'⚡', before:'', after:' show', answer:'laser'},
+  {emoji:'📖', before:'book ', after:'', answer:'festival'}, {emoji:'🎬', before:'', after:' festival', answer:'movie'},
+  {emoji:'🍳', before:'cooking class ', after:'', answer:'party'}, {emoji:'🥋', before:'taekwondo ', after:'', answer:'show'}
+];
+let stage0Solved = new Set();
+function initStage0(){
+  if(document.getElementById('wordGrid').children.length) return;
+  const grid = document.getElementById('wordGrid');
+  STAGE0_ITEMS.forEach((item,i)=>{
+    const div = document.createElement('div'); div.className = 'word-item'; div.id = 'w0-'+i;
+    div.innerHTML = `<span class="emoji">${item.emoji}</span><div class="sentence">${item.before}<input type="text" data-idx="${i}" autocomplete="off" spellcheck="false">${item.after}</div>`;
+    grid.appendChild(div);
+  });
+  grid.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('keyup', e=>{ if(e.key==='Enter') checkStage0(parseInt(inp.dataset.idx)); });
+    inp.addEventListener('blur', ()=> checkStage0(parseInt(inp.dataset.idx)));
+  });
+}
+function checkStage0(i){
+  if(stage0Solved.has(i)) return;
+  const inp = document.querySelector(`#wordGrid input[data-idx="${i}"]`); const val = norm(inp.value);
+  if(val === STAGE0_ITEMS[i].answer){
+    stage0Solved.add(i); document.getElementById('w0-'+i).classList.add('correct');
+    inp.disabled = true; updateStage0Status();
+  }
+}
+function updateStage0Status(){
+  const status = document.getElementById('stage0-status');
+  if(stage0Solved.size === STAGE0_ITEMS.length){
+    status.textContent = '모두 완성했어요! 두 번째 방으로 통하는 길이 열렸습니다 🔓'; status.className = 'status-line ok';
+    document.getElementById('stage0-next').disabled = false;
+  } else { status.textContent = `${stage0Solved.size} / ${STAGE0_ITEMS.length} 완성`; status.className = 'status-line'; }
+}
+
+/* STAGE 1 */
+const TILE_ORDER = [
+  {type:'place', key:'house'}, {type:'event', key:'laser'}, {type:'place', key:'kitchen'}, {type:'event', key:'book'},
+  {type:'place', key:'library'}, {type:'event', key:'movie'}, {type:'place', key:'school'}, {type:'event', key:'birthday'},
+  {type:'place', key:'park5'}, {type:'event', key:'cooking'}, {type:'place', key:'park6'}, {type:'event', key:'taekwondo'}
+];
+const CODE_DIGITS = ['7','2','9','4'];
+let boardState = { pos:0, solvedTiles:new Set(), code:[], awaitingAnswer:false, fails:0, rolling:false };
+
+function tileData(idx){
+  const t = TILE_ORDER[idx];
+  if(t.type==='place'){
+    const p = PLACES.find(p=>p.key===t.key); return {type:'place', ref:p, kor:p.kor, num:p.num};
+  } else {
+    const e = EVENTS.find(e=>e.key===t.key); return {type:'event', ref:e, kor:e.kor};
+  }
+}
+
+function initStage1(){ renderBoard(); document.getElementById('challengeArea').innerHTML = ''; document.getElementById('rollBtn').disabled = false; }
+
+function renderBoard(){
+  const wrap = document.getElementById('boardWrap'); wrap.innerHTML = '';
+  TILE_ORDER.forEach((t,i)=>{
+    const d = tileData(i); const div = document.createElement('div');
+    div.className = 'tile ' + (i===0?'start ':'') + (boardState.solvedTiles.has(i)?'solved ':'') + (i===boardState.pos?'token':'');
+    if(i === 0) {
+      div.innerHTML = `<div class="n">🕸️</div><div>START</div>`;
+    } else {
+      let icon = d.type === 'place' ? '📍' : '🎉';
+      div.innerHTML = `<div class="n">${icon}</div><div>${d.kor}</div>`;
+    }
+    wrap.appendChild(div);
+  });
+}
+
+function rollDice(){
+  if(boardState.rolling || boardState.awaitingAnswer) return;
+  boardState.rolling = true; document.getElementById('rollBtn').disabled = true;
+  const diceEl = document.getElementById('dice'); diceEl.classList.add('rolling'); let ticks = 0;
+  const iv = setInterval(()=>{
+    diceEl.textContent = 1 + Math.floor(Math.random()*6); ticks++;
+    if(ticks>6){
+      clearInterval(iv); diceEl.classList.remove('rolling');
+      const roll = 1 + Math.floor(Math.random()*6); diceEl.textContent = roll;
+      boardState.rolling = false; movePlayer(roll);
+    }
+  },80);
+}
+
+function movePlayer(roll){
+  boardState.pos = (boardState.pos + roll) % TILE_ORDER.length; renderBoard();
+  if(boardState.pos === 0){
+    document.getElementById('challengeArea').innerHTML = `<div class="status-line ok">안전지대에 도착했어요! 🕸️ — 다시 굴려보세요.</div>`;
+    document.getElementById('rollBtn').disabled = false; return;
+  }
+  if(boardState.solvedTiles.has(boardState.pos)){
+    document.getElementById('challengeArea').innerHTML = `<div class="status-line">이미 암호를 찾은 칸이에요. 다시 굴려보세요!</div>`;
+    document.getElementById('rollBtn').disabled = false; return;
+  }
+  showChallenge(boardState.pos);
+}
+
+function showChallenge(idx){
+  boardState.awaitingAnswer = true; boardState.fails = 0; const d = tileData(idx);
+  const area = document.getElementById('challengeArea');
+  
+  if(d.type==='place'){
+    area.innerHTML = `
+      <div class="challenge-box">
+        <div class="q-text">Q. ${d.kor}으로 ${d.num}시에 와.</div>
+        <div class="frame">Come to <u>${d.ref.name}</u> at ___ .</div>
+        <input type="text" id="challengeInput" placeholder="숫자를 적어주세요" autocomplete="off">
+        <button class="btn" onclick="checkChallenge(${idx})">잉크 칠하기!</button>
+        <div class="status-line" id="challengeStatus"></div>
+      </div>`;
+  } else {
+    area.innerHTML = `
+      <div class="challenge-box">
+        <div class="q-text">Q. ${d.kor}에 올 수 있니?</div>
+        <div class="frame">Can you come to ______ ?</div>
+        <input type="text" id="challengeInput" placeholder="영어를 적어주세요" autocomplete="off">
+        <button class="btn" onclick="checkChallenge(${idx})">잉크 칠하기!</button>
+        <div class="status-line" id="challengeStatus"></div>
+      </div>`;
+  }
+  const inp = document.getElementById('challengeInput'); inp.focus();
+  inp.addEventListener('keyup', e=>{ if(e.key==='Enter') checkChallenge(idx); });
+}
+
+function checkChallenge(idx){
+  const d = tileData(idx); const val = norm(document.getElementById('challengeInput').value);
+  const statusEl = document.getElementById('challengeStatus'); let ok = false;
+  
+  if(d.type==='place'){ 
+    ok = (val === String(d.num)); 
+  } else { 
+    const accepted = [norm(d.ref.label), norm(d.ref.full)]; 
+    ok = accepted.includes(val); 
+  }
+
+  if(ok){
+    boardState.solvedTiles.add(idx); boardState.awaitingAnswer = false;
+    if(boardState.code.length < 4){ boardState.code.push(CODE_DIGITS[boardState.code.length]); updateCodeTrack(); }
+    statusEl.textContent = '정답이에요! 암호 조각을 하나 발견했어요 ✨'; statusEl.className = 'status-line ok';
+    renderBoard(); document.getElementById('rollBtn').disabled = false;
+    if(boardState.code.length >= 4){
+      setTimeout(()=>{
+        document.getElementById('challengeArea').innerHTML = `<div class="status-line ok" style="font-size:16px;">암호 4개를 모두 모았어요! 🎉</div>`;
+        document.getElementById('rollBtn').style.display='none'; document.getElementById('stage1-next').style.display='block';
+      }, 600);
+    }
+  } else {
+    boardState.fails++;
+    statusEl.textContent = boardState.fails>=2 ? `다시 확인해보세요! 위쪽 힌트를 참고하세요.` : '다시 한번 확인해 보세요!';
+    statusEl.className = 'status-line err';
+  }
+}
+
+function updateCodeTrack(){
+  for(let i=0; i<4; i++){
+    const slot = document.getElementById('track-'+i);
+    if(boardState.code[i]){ slot.textContent = boardState.code[i]; slot.classList.add('filled'); }
+  }
+}
+
+/* STAGE 2 */
+function checkInvitation(){
+  const ev = norm(document.getElementById('eventInput').value); const pl = norm(document.getElementById('placeInput').value);
+  const tm = norm(document.getElementById('timeInput').value); const status = document.getElementById('stage2-status');
+  const evMatch = EVENTS.find(e => norm(e.label)===ev || norm(e.full)===ev || norm(e.full.replace('the ',''))===ev || norm(e.full.replace('my ',''))===ev);
+  const plMatch = PLACES.find(p => norm(p.name)===pl || norm(p.name.replace('the ','').replace('my ',''))===pl);
+
+  if(!evMatch || evMatch.key !== 'book'){ 
+    status.textContent = '쪽지의 행사 이름이 아닌 것 같아요!'; status.className = 'status-line err'; return; 
+  }
+  if(!plMatch || plMatch.key !== 'library'){ 
+    status.textContent = '쪽지의 장소 이름이 아닌 것 같아요!'; status.className = 'status-line err'; return; 
+  }
+  if(parseInt(tm) !== 3){ 
+    status.textContent = '쪽지에 적힌 시간이 아닌 것 같아요!'; status.className = 'status-line err'; return; 
+  }
+
+  status.textContent = '완벽해요! 쪽지의 내용대로 초대장이 완성되었어요 ✉️'; status.className = 'status-line ok';
+  window._finalEvent = evMatch; window._finalPlace = plMatch;
+  const env = document.getElementById('envelopePreview'); env.classList.add('show');
+  env.innerHTML = `Can you come to ${evMatch.full}?<br>Come to ${plMatch.name} at 3.`;
+  document.getElementById('stage2-next').style.display = 'block';
+}
+
+/* STAGE 3 */
+let doorInput = [];
+function initStage3(){
+  doorInput = []; renderKeypad(); updateCodeDisplay();
+  document.getElementById('stage3-status').textContent = '';
+}
+function renderKeypad(){
+  const kp = document.getElementById('keypad'); kp.innerHTML = '';
+  for(let i=1;i<=9;i++){ const b = document.createElement('button'); b.textContent = i; b.onclick = ()=>pressKey(String(i)); kp.appendChild(b); }
+  const clearBtn = document.createElement('button'); clearBtn.textContent = '지우기'; clearBtn.className = 'wide'; clearBtn.onclick = ()=>{ doorInput=[]; updateCodeDisplay(); document.getElementById('stage3-status').textContent=''; };
+  const zero = document.createElement('button'); zero.textContent = '0'; zero.onclick = ()=>pressKey('0');
+  const enter = document.createElement('button'); enter.textContent = '확인'; enter.onclick = tryDoorCode;
+  kp.appendChild(zero); kp.appendChild(enter); kp.appendChild(clearBtn);
+}
+function pressKey(k){ if(doorInput.length>=4) return; doorInput.push(k); updateCodeDisplay(); if(doorInput.length===4) tryDoorCode(); }
+function updateCodeDisplay(){
+  const disp = document.getElementById('codeDisplay'); const arr = ['—','—','—','—'];
+  doorInput.forEach((d,i)=>arr[i]=d); disp.textContent = arr.join(' ');
+}
+function tryDoorCode(){
+  const status = document.getElementById('stage3-status'); const guess = doorInput.join(''); const answer = boardState.code.join('');
+  if(guess === answer && guess.length===4){
+    doorSound.play().catch(()=>{}); 
+    status.innerHTML = '끼이익...<br>저택의 무거운 문이 열렸어요! 🦇'; status.className = 'status-line ok';
+    setTimeout(showSuccess, 1200);
+  } else if(doorInput.length===4){
+    status.textContent = '암호가 맞지 않아요. 미로에서 얻은 숫자를 다시 확인해보세요!'; status.className = 'status-line err';
+    setTimeout(()=>{ doorInput=[]; updateCodeDisplay(); }, 800);
+  }
+}
+function showSuccess(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-success').classList.add('active');
+  document.querySelectorAll('.dot').forEach(d=>d.classList.add('done'));
+  document.getElementById('bgLayer').style.backgroundImage = bgImages['-1'];
+  
+  const ev = window._finalEvent, pl = window._finalPlace; const finalCard = document.getElementById('finalCard');
+  if(ev && pl){ finalCard.innerHTML = `Can you come to ${ev.full}?<br>Come to ${pl.name} at 3.`; } 
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
